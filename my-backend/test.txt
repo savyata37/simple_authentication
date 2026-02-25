@@ -1,0 +1,148 @@
+POST http://localhost:5000/api/auth/register-superadmin
+Body: { "email": "root@system.com", "password": "Admin@123" }
+
+{
+    "message": "Superadmin created"
+}
+
+
+POST http://localhost:5000/api/auth/login
+Body: { "email": "root@system.com", "password": "Admin@123" }
+
+{
+    "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6InN1cGVyYWRtaW4iLCJpYXQiOjE3NzE2OTM4ODEsImV4cCI6MTc3MTY5NDc4MX0.AER_DumYENTrGLpmSeJzUkAvtARhapgzi2j3cj-PSnU",
+    "role": "superadmin"
+}
+
+POST http://localhost:5000/api/auth/logout
+
+
+
+3️⃣ Frontend usage
+
+Whenever your access token expires, you can call:
+
+fetch("http://localhost:5000/api/auth/refresh-token", {
+  method: "GET",
+  credentials: "include" // important to send the cookie
+})
+.then(res => res.json())
+.then(data => {
+  // data.accessToken is your new access token
+  console.log(data.accessToken);
+});
+
+
+Step 1: Register a Superadmin
+
+Route: POST /api/auth/register-superadmin
+
+Body:
+
+{
+  "email": "root@system.com",
+  "password": "Admin@123"
+}
+
+✅ Expected result:
+
+{ "message": "Superadmin created" }
+
+First superadmin is only allowed if no superadmin exists.
+
+Step 2: Login as Superadmin
+
+Route: POST /api/auth/login
+
+Body:
+
+{
+  "email": "root@system.com",
+  "password": "Admin@123"
+}
+
+✅ Expected result:
+
+{
+  "accessToken": "<JWT_ACCESS_TOKEN>",
+  "role": "superadmin"
+}
+
+Check that refreshToken cookie is set (HTTP-only cookie).
+
+Use this accessToken for Authorization in protected routes.
+
+Step 3: Register Admin/User
+
+Route: POST /api/auth/register
+
+Headers:
+
+Authorization: Bearer <ACCESS_TOKEN_FROM_STEP_2>
+
+Body example (Admin):
+
+{
+  "email": "admin@system.com",
+  "password": "Admin@123",
+  "role": "admin"
+}
+
+Body example (User):
+
+{
+  "email": "user@system.com",
+  "password": "User@123",
+  "role": "user"
+}
+
+✅ Expected result:
+
+{ "message": "User created successfully" }
+
+Test authorization rules:
+
+Admin cannot create superadmin
+
+Only superadmin can create other superadmins
+
+Step 4: Login as Admin/User
+
+Repeat Step 2 using the new accounts.
+
+Access protected routes using accessToken.
+
+Step 5: Refresh Token
+
+Route: GET /api/auth/refresh-token
+
+Headers: no need for Authorization
+
+Cookie: refreshToken should be automatically sent
+
+✅ Expected result:
+
+{
+  "accessToken": "<NEW_JWT_ACCESS_TOKEN>",
+  "role": "admin" // or superadmin/user depending on login
+}
+
+Test that accessToken is refreshed after old one expires.
+
+Step 6: Logout
+
+Route: POST /api/auth/logout
+
+Headers: no Authorization needed
+
+Cookie: refreshToken should be sent automatically
+
+✅ Expected result:
+
+{ "message": "Logged out successfully" }
+
+Verify:
+
+refreshToken cookie cleared
+
+DB refresh_token field set to NULL
